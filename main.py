@@ -4,11 +4,7 @@ import pandas
 import torch
 import pandas as pd
 
-def getlongest(a,b):
-   if len(a)<len(b):
-      return b
-   else:
-      return a
+
 ''' 
 dataset from: https://www.kaggle.com/datasets/fanbyprinciple/iot-device-identification?resource=download
 '''
