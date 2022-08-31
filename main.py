@@ -3,7 +3,14 @@ import numpy as numpy
 import pandas
 import torch
 import pandas as pd
+import struct
 
+'''
+Function for float to binary from here: 
+https://stackoverflow.com/questions/16444726/binary-representation-of-float-in-python-bits-not-hex
+'''
+def binary(num):  # converts a float to binary
+    return ''.join('{:0>8b}'.format(c) for c in struct.pack('!f', num))
 
 ''' 
 dataset from: https://www.kaggle.com/datasets/fanbyprinciple/iot-device-identification?resource=download
@@ -26,10 +33,20 @@ for num in range(len(load_train)):  # numerically iterate through every line of 
       datapoint.append(item)  # add it to the list of features for this row
    listified_train_data.append([datapoint[0:-1],datapoint[-1]])  # add the final list of features for this row to the processed dataset
 
-
+binary_train_data = []
 
 for item in listified_train_data:
-   print(item[1])
+    #print(item)
+    rowie = ""
+
+    for feature in item[0]:
+        rowie+=str(binary(float(feature)))
+    binary_train_data.append([*rowie])  # simultaneously splits the binary (bit stream representation) of the data into individual bits and adds it to the list of binary representations
+
+for i in binary_train_data:
+   print(i)
+
+
 
 
 
