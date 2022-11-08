@@ -1,12 +1,13 @@
 import os
-import numpy as numpy
+import numpy as np
 import pandas
 import pycuda
 #import torch
 import pandas as pd
 #from pycuda import *
+import pycuda
 import struct
-from pyTsetlinMachine.tm import *
+from PyTsetlinMachineCUDA import *
 import random
 import math
 
@@ -18,6 +19,7 @@ def binary(num):  # converts a float to binary, 8 bits
     return ''.join('{:0>8b}'.format(c) for c in struct.pack('!f', num))
 
 def shuffle_dataset(dataset):
+    print("Shuffling...")
     output_values_list = []  # list for shuffled values
     output_labels_list = []  # list for shuffled labels
     output_raw_labels_list = []  # list for shuffled string labels
@@ -31,11 +33,25 @@ def shuffle_dataset(dataset):
             temp = tempdata[c][index]  # copy as a buffer variable
             tempdata[c][index] = tempdata[c][-1]  # copy final element in array to the [index] location
             tempdata[c] = tempdata[c][0:-1]  # overwrite dataset with dataset except last element (which is now copied to location[index])
-    print("Shuffling")
+    print("Shuffling done")
+    return (np.array(output_values_list).astype(float),output_labels_list,output_raw_labels_list)
+
+def shuffle_fast(dataset):
+    print("Fast shuffling...")
+    output_values_list = []  # list for shuffled values
+    output_labels_list = []  # list for shuffled labels
+    output_raw_labels_list = []  # list for shuffled string labels
+    indices = list(range(len(dataset[0])))
+    random.shuffle(indices)
+    for i in indices:
+        output_values_list.append(dataset[i][0])
+        output_labels_list.append(dataset[i][1])
+        output_raw_labels_list.append(dataset[i][2])
+    print("done shuffling")
     return (np.array(output_values_list).astype(float),output_labels_list,output_raw_labels_list)
         
-        
 def iot_data_to_binary_list(path):
+    print("Binarizing...")
     data_values = []  # Holds numerical values of each parameter as list for each data entry
     data_labels = []  # Holds numerical representation of labels from entire dataset (0, 1, 2, 3, etc.)
     data_labels_raw = []  # Holds string representation of labels from entire dataset ('water_sensor', 'baby_monitor', 'motion_sensor', 'lights', etc)
@@ -77,18 +93,31 @@ def iot_data_to_binary_list(path):
             rowie+=str(binary(float(feature)))  # concatenate the binary string for each feature to the string representing the item
         data_binary_values.append([*rowie])  # simultaneously splits the binary (bit stream representation) of the data into individual bits and adds it to the list of binary representations
     print("Binarizing done")
-    return [np.array(data_binary_values).astype(float), data_labels, data_labels_raw]  # returns tuple of binary representation of data item and its label as an integer, and the string of labels for later decoding.
+    return (np.array(data_binary_values).astype(float), data_labels, data_labels_raw)  # returns tuple of binary representation of data item and its label as an integer, and the string of labels for later decoding.
 
 ''' 
 dataset from: https://www.kaggle.com/datasets/fanbyprinciple/iot-device-identification?resource=download
 '''
 #  path to data files
-train_path = "data/Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv"
-#bonus_paths = ["data/Wednesday-workingHours.pcap_ISCX.csv"]
+data_paths = ["data/Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv", "data/Wednesday-workingHours.pcap_ISCX.csv"]
 test_path = "data/iot_device_test.csv"
 
-# Read first file and create data
-X_all_data, Y_all_data, labels_all_data = shuffle_dataset(iot_data_to_binary_list(train_path))
+all_data = [[],[],[]]
+# Read files and create data
+for path in data_paths:
+    print("Pre-processing data from", path)
+    val, lab, labraw = iot_data_to_binary_list(path)
+    print(len(val),len(lab),len(labraw))
+    print(val[0],lab[0],labraw[0])
+    exit()
+    all_data[0]+=val
+    all_data[1]+=lab
+    all_data[2]+=labraw
+print(len(all_data),len(all_data[0]))
+exit()
+X_all_data, Y_all_data, labels_all_data = shuffle_dataset(all_data)    
+
+
     
 count = len(X_all_data)
 split = 0.7
