@@ -5,9 +5,9 @@ import pycuda
 #import torch
 import pandas as pd
 #from pycuda import *
-import pycuda
+#import pycuda
 import struct
-from PyTsetlinMachineCUDA import *
+from pyTsetlinMachine.tm import *
 import random
 import math
 
@@ -107,14 +107,16 @@ all_data = [[],[],[]]
 for path in data_paths:
     print("Pre-processing data from", path)
     val, lab, labraw = iot_data_to_binary_list(path)
-    print(len(val),len(lab),len(labraw))
-    print(val[0],lab[0],labraw[0])
-    exit()
-    all_data[0]+=val
-    all_data[1]+=lab
-    all_data[2]+=labraw
-print(len(all_data),len(all_data[0]))
-exit()
+    if len(all_data[0]) == 0:
+        print("data 0")
+        all_data[0]=val
+        all_data[1]=lab
+        all_data[2]=labraw
+    else:
+        print("data not 0")
+        all_data[0] = np.concatenate((all_data[0],val))
+        all_data[1]+=lab
+        all_data[2]+=labraw
 X_all_data, Y_all_data, labels_all_data = shuffle_dataset(all_data)    
 
 
@@ -129,10 +131,10 @@ X_test = X_all_data[math.floor(count*split):]
 Y_test = Y_all_data[math.floor(count*split):]
 labels_test = labels_all_data[math.floor(count*split):]
 
-S = [27.0, 36.0]  # S-value
+S = [9.0, 18.0]  # S-value
 Clauses = 20000  # number of clauses to generate / to make each classification vote
-T = [24, 32]  # T-value
-Epochs = 50
+T = [6, 12]  # T-value
+Epochs = 250
 for s_ in S:
     for t_ in T:
         print("Running clauses:"+str(Clauses)+", T:"+str(t_)+", S:"+str(s_))  # status report to the console
@@ -152,7 +154,7 @@ for s_ in S:
         path = "results_new_data_20k_S_"+str(s_)+"_T_"+str(t_)+".txt"
         file = open(path,"w")
         file.write("Results: \n")
-        file.write("Dataset: "+train_path+"\n")
+        file.write("Dataset: Both Thursday and Wednesday.\n")
         file.write("Params: S: "+str(s_)+ ", T:"+str(t_)+", Clauses:"+str(Clauses)+", Epochs: "+str(Epochs)+"\n")
         file.write("Accuracy: "+str(100*Correct/Total)+"% \n")
         file.close()
